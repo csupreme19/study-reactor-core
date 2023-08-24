@@ -114,6 +114,11 @@ public class Ex4 {
                         public void processComplete() {
                             sink.complete();
                         }
+
+                        @Override
+                        public void processError(Throwable e) {
+                            sink.error(e);
+                        }
                     }
             );
         });
@@ -131,8 +136,41 @@ public class Ex4 {
     }
 
     @Test
+    @DisplayName("비동기 싱글쓰레드 플럭스 생성(push) ")
     void fluxPush() {
+        MyEventProcessor myEventProcessor = new MyEventProcessor();
 
+        Flux<String> bridge = Flux.push(sink -> {
+            myEventProcessor.register(
+                    new MyEventListener<String>() {
+                        @Override
+                        public void onDataChunk(List<String> chunk) {
+                            for (String s : chunk) {
+                                sink.next(s);
+                            }
+                        }
+
+                        @Override
+                        public void processComplete() {
+                            sink.complete();
+                        }
+
+                        @Override
+                        public void processError(Throwable e) {
+                            sink.error(e);
+                        }
+                    }
+            );
+        });
+
+        bridge.subscribe(
+                item -> System.out.println("Received: " + item),
+                error -> System.err.println("Error received: " + error),
+                () -> System.out.println("Stream completed")
+        );
+
+        myEventProcessor.newDataChunk(List.of("item1", "item2", "item3"));
+        myEventProcessor.dataError();
     }
 
 }
