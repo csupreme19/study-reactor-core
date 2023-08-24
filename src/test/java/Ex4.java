@@ -2,15 +2,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import subscriber.SampleSubscriber;
 
 import java.util.Arrays;
 import java.util.List;
 
-@DisplayName("4.3 Simple ways to Create a Flux or Mono and Subscribe to It")
+@DisplayName("4.3 간단한 모노 플럭스 생성 후 구독해보기")
 public class Ex4 {
 
     @Test
-    @DisplayName("Flux from Collection")
+    @DisplayName("플럭스 생성하기")
     void flux1() {
         Flux<String> seq1 = Flux.just("foo", "bar", "foobar");
 
@@ -24,7 +25,7 @@ public class Ex4 {
     }
 
     @Test
-    @DisplayName("Subscribe Flux(with Error)")
+    @DisplayName("플럭스 구독하기(에러)")
     void subscribe1() {
         Flux<Integer> ints = Flux.range(1, 4)
                 .map(i -> {
@@ -37,12 +38,20 @@ public class Ex4 {
     }
 
     @Test
-    @DisplayName("Subscribe Flux(with Completion)")
+    @DisplayName("플럭스 구독하기(완료)")
     void subscribe2() {
         Flux<Integer> ints = Flux.range(1, 4);
         ints.subscribe(i -> System.out.println(i),
                 error -> System.err.println("Error: " + error),
                 () -> System.out.println("Done"));
+    }
+
+    @Test
+    @DisplayName("플럭스 구독하기(구독 구현)")
+    void baseSubscriber() {
+        SampleSubscriber<Integer> ss = new SampleSubscriber<>();
+        Flux<Integer> ints = Flux.range(1, 4);
+        ints.subscribe(ss);
     }
 
 }
