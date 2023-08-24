@@ -1,6 +1,8 @@
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Subscription;
+import publisher.MyEventListener;
+import publisher.MyEventProcessor;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,7 +36,7 @@ public class Ex4 {
                     if (i <= 3) return i;
                     throw new RuntimeException("Got to 4");
                 });
-        ints.subscribe(i -> System.out.println(i),
+        ints.subscribe(System.out::println,
                 error -> System.err.println("Error: " + error),
                 () -> System.out.println("Done"));
     }
@@ -43,7 +45,7 @@ public class Ex4 {
     @DisplayName("플럭스 구독하기(완료)")
     void subscribe2() {
         Flux<Integer> ints = Flux.range(1, 4);
-        ints.subscribe(i -> System.out.println(i),
+        ints.subscribe(System.out::println,
                 error -> System.err.println("Error: " + error),
                 () -> System.out.println("Done"));
     }
@@ -77,8 +79,8 @@ public class Ex4 {
     }
 
     @Test
-    @DisplayName("동기식 플럭스 생성")
-    void fluxGenerate1() {
+    @DisplayName("동기식 플럭스 생성(generate)")
+    void fluxGenerate() {
         Flux<String> flux = Flux.generate(
                 // 초기값
                 () -> 0,
@@ -89,7 +91,48 @@ public class Ex4 {
                 }
         );
 
+        // 구독하는 시점에 generator에서 정의한대로 자동 발행
         flux.subscribe(System.out::println);
+    }
+
+    @Test
+    @DisplayName("비동기식 멀티쓰레드 플럭스 생성(create)")
+    void fluxCreate() {
+        MyEventProcessor myEventProcessor = new MyEventProcessor();
+
+        Flux<String> bridge = Flux.create(sink -> {
+            myEventProcessor.register(
+                    new MyEventListener<String>() {
+                        @Override
+                        public void onDataChunk(List<String> chunk) {
+                            for (String s : chunk) {
+                                sink.next(s);
+                            }
+                        }
+
+                        @Override
+                        public void processComplete() {
+                            sink.complete();
+                        }
+                    }
+            );
+        });
+
+        // 구독 이후 발행되면 데이터 확인 가능
+        bridge.subscribe(
+                item -> System.out.println("Received: " + item),
+                error -> System.err.println("Error received: " + error),
+                () -> System.out.println("Stream completed")
+        );
+
+        myEventProcessor.newDataChunk(Arrays.asList("item1", "item2"));
+        myEventProcessor.dataComplete();
+
+    }
+
+    @Test
+    void fluxPush() {
+
     }
 
 }
