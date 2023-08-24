@@ -1,5 +1,7 @@
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Subscription;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import subscriber.SampleSubscriber;
@@ -48,10 +50,30 @@ public class Ex4 {
 
     @Test
     @DisplayName("플럭스 구독하기(구독 구현)")
-    void baseSubscriber() {
+    void subscriber3() {
         SampleSubscriber<Integer> ss = new SampleSubscriber<>();
         Flux<Integer> ints = Flux.range(1, 4);
         ints.subscribe(ss);
+    }
+
+    @Test
+    @DisplayName("백프레셔 발생(1건)")
+    void backPressure1() {
+        Flux.range(1, 10)
+                .doOnRequest(r -> System.out.println("request of " + r))
+                .subscribe(new BaseSubscriber<Integer>() {
+                    @Override
+                    protected void hookOnSubscribe(Subscription subscription) {
+                        request(1);
+                    }
+
+                    @Override
+                    protected void hookOnNext(Integer value) {
+                        // 1건만 처리후 취소
+                        System.out.println("Cancelling after having received " + value);
+                        cancel();
+                    }
+                });
     }
 
 }
