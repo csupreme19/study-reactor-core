@@ -132,7 +132,6 @@ public class Ex4 {
 
         myEventProcessor.newDataChunk(Arrays.asList("item1", "item2"));
         myEventProcessor.dataComplete();
-
     }
 
     @Test
@@ -171,6 +170,48 @@ public class Ex4 {
 
         myEventProcessor.newDataChunk(List.of("item1", "item2", "item3"));
         myEventProcessor.dataError();
+    }
+
+    @Test
+    @DisplayName("플럭스 취소, 오류 처리")
+    void fluxClean() {
+        MyEventProcessor myEventProcessor = new MyEventProcessor();
+
+        Flux<String> bridge = Flux.create(sink -> {
+            myEventProcessor.register(
+                    new MyEventListener<String>() {
+                        @Override
+                        public void onDataChunk(List<String> chunk) {
+                            for (String s : chunk) {
+                                sink.next(s);
+                            }
+                        }
+
+                        @Override
+                        public void processComplete() {
+                            sink.complete();
+                        }
+
+                        @Override
+                        public void processError(Throwable e) {
+                            sink.error(e);
+                        }
+                    }
+            );
+            sink.onRequest(n -> System.out.println("Flux request " + n))
+                    .onCancel(() -> System.out.println("Flux cancelled"))
+                    .onDispose(() -> System.out.println("Flux disposed"));
+        });
+
+        // 구독 이후 발행되면 데이터 확인 가능
+        bridge.subscribe(
+                item -> System.out.println("Received: " + item),
+                error -> System.err.println("Error received: " + error),
+                () -> System.out.println("Stream completed")
+        );
+
+        myEventProcessor.newDataChunk(Arrays.asList("item1", "item2"));
+        myEventProcessor.dataComplete();
     }
 
 }
