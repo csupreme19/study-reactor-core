@@ -254,7 +254,7 @@ public class Ex4 {
     }
 
     @Test
-    @DisplayName("실행 쓰레드 설정")
+    @DisplayName("실행 쓰레드 설정(publishOn)")
     void publishOn() throws InterruptedException {
         Scheduler s = Schedulers.newParallel("parellel-scheduler", 4);  // 4개 쓰레드 생성
 
@@ -264,11 +264,29 @@ public class Ex4 {
                 .publishOn(s)           // 생성한 쓰레드 사용
                 .map(i -> "value " + i);    // 두번째 map은 publishOn에서 설정한 쓰레드 사용
 
+        Thread t = new Thread(() -> flux.subscribe(data -> System.out.printf("[%s] %s%n", Thread.currentThread().getName(), data)));
+
+        t.start();
+        t.join();   // 외부 쓰레드 종료 전 현재 테스트의 main 쓰레드가 종료될 수 있기 때문에 설정
+
         /**
          * 실제 호출은 마지막 map 이후이므로 설정한 쓰레드로 보임
          * [parellel-scheduler-1] value 11
          * [parellel-scheduler-1] value 12
          */
+    }
+
+    @Test
+    @DisplayName("실행 쓰레드 설정(subscribeOn)")
+    void subscribeOn() throws InterruptedException {
+        Scheduler s = Schedulers.newParallel("parallel-scheduler", 4);
+
+        final Flux<String> flux = Flux
+                .range(1, 2)
+                .map(i -> 10 + i)       // s 쓰레드 4개 중 하나에서 실행
+                .subscribeOn(s)           // 모든 시퀀스를 설정한 쓰레드에서 실행
+                .map(i -> "value " + i);    // s 쓰레드 4개 중 하나에서 실행
+
         Thread t = new Thread(() -> flux.subscribe(data -> System.out.printf("[%s] %s%n", Thread.currentThread().getName(), data)));
 
         t.start();
