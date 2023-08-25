@@ -365,4 +365,19 @@ public class Ex4 {
          [parellel-scheduler-1] value 12
          */
     }
+
+    @Test
+    @DisplayName("에러 핸들링")
+    void onError() {
+        Flux.just(1, 2, 0)
+                .map(i -> "100 / " + i + " = " + (100 / i))
+                .onErrorReturn("Divided by zero 😡") // 에러 처리
+                .subscribe(System.out::println);
+
+        /*
+        100 / 1 = 100
+        100 / 2 = 50
+        Divided by zero 😡
+         */
+    }
 }
