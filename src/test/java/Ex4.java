@@ -6,6 +6,8 @@ import publisher.MyEventProcessor;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 import subscriber.SampleSubscriber;
 
 import java.util.Arrays;
@@ -246,6 +248,28 @@ public class Ex4 {
                 .subscribe(v -> {
                     System.out.println(v + Thread.currentThread().getName());
                 }));
+
+        t.start();
+        t.join();
+    }
+
+    @Test
+    @DisplayName("실행 쓰레드 설정")
+    void publishOn() throws InterruptedException {
+        Scheduler s = Schedulers.newParallel("parellel-scheduler", 4);  // 4개 쓰레드 생성
+
+        final Flux<String> flux = Flux
+                .range(1, 2)
+                .map(i -> 10 + i)       // 첫번째 map은 실제 호출되는 쓰레드에서 실행
+                .publishOn(s)           // 생성한 쓰레드 사용
+                .map(i -> "value " + i);    // 두번째 map은 publishOn에서 설정한 쓰레드 사용
+
+        /**
+         * 실제 호출은 마지막 map 이후이므로 설정한 쓰레드로 보임
+         * [parellel-scheduler-1] value 11
+         * [parellel-scheduler-1] value 12
+         */
+        Thread t = new Thread(() -> flux.subscribe(data -> System.out.printf("[%s] %s%n", Thread.currentThread().getName(), data)));
 
         t.start();
         t.join();
