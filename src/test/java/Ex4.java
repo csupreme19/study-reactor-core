@@ -235,4 +235,19 @@ public class Ex4 {
         int letterIndexAscii = 'A' + letterNumber - 1;
         return "" + (char) letterIndexAscii;
     }
+
+    @Test
+    @DisplayName("실행 쓰레드 확인")
+    void thread() throws InterruptedException {
+        final Mono<String> mono = Mono.just("hello ");
+
+        Thread t = new Thread(() -> mono
+                .map(msg -> msg + "thread ")
+                .subscribe(v -> {
+                    System.out.println(v + Thread.currentThread().getName());
+                }));
+
+        t.start();
+        t.join();
+    }
 }
