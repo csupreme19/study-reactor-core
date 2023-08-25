@@ -123,4 +123,22 @@ public class Ex4_6 {
         if ("unknown".equals(data)) return Mono.error(new RuntimeException());
         return Mono.just(data);
     }
+
+    @Test
+    @DisplayName("에러 핸들링 + finally")
+    void doFinally() {
+        Flux<String> flux = Flux.just("foo", "bar")
+                .doOnSubscribe(s -> System.out.println("subscribed " + s.getClass().getName()))
+                .doFinally(type -> {
+                    System.out.println("finally " + type.name());
+                })
+                .take(1);
+
+        flux.subscribe();
+
+        /*
+        subscribed reactor.core.publisher.FluxArray$ArraySubscription
+        finally CANCEL
+         */
+    }
 }
