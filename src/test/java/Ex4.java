@@ -408,4 +408,21 @@ public class Ex4 {
         java.lang.RuntimeException: 5
          */
     }
+
+    @Test
+    @DisplayName("에러 핸들링(무시)")
+    void onErrorComplete() {
+        Flux.just(10, 20, 30)
+                .map(v -> {
+                    if (v < 30) return v;
+                    throw new RuntimeException("" + v);
+                })
+                .onErrorComplete()
+                .subscribe(v -> System.out.println(v)); // 에러 발생시 무시
+
+        /*
+        10
+        20
+         */
+    }
 }
