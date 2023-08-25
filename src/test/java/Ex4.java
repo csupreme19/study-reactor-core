@@ -380,4 +380,32 @@ public class Ex4 {
         Divided by zero 😡
          */
     }
+
+    @Test
+    @DisplayName("구독시 에러 핸들링")
+    void onErrorSubscribe() {
+        Flux<String> flux = Flux.range(1, 5)
+                .map(v -> {
+                    if (v < 5) return v;
+                    throw new RuntimeException("" + v);
+                })
+                .map(v -> {
+                    return "value " + v;
+                });
+
+        flux.subscribe(value -> {
+                    System.out.println(value);
+                },
+                error -> {
+                    System.err.println(error);
+                });
+
+        /*
+        value 1
+        value 2
+        value 3
+        value 4
+        java.lang.RuntimeException: 5
+         */
+    }
 }
