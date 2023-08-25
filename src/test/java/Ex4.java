@@ -41,6 +41,12 @@ public class Ex4 {
         ints.subscribe(System.out::println,
                 error -> System.err.println("Error: " + error),
                 () -> System.out.println("Done"));
+        /*
+        1
+        2
+        3
+        Error: java.lang.RuntimeException: Got to 4
+         */
     }
 
     @Test
@@ -50,6 +56,13 @@ public class Ex4 {
         ints.subscribe(System.out::println,
                 error -> System.err.println("Error: " + error),
                 () -> System.out.println("Done"));
+        /*
+        1
+        2
+        3
+        4
+        Done
+         */
     }
 
     @Test
@@ -58,6 +71,14 @@ public class Ex4 {
         SampleSubscriber<Integer> ss = new SampleSubscriber<>();
         Flux<Integer> ints = Flux.range(1, 4);
         ints.subscribe(ss);
+
+        /*
+        Subscribed
+        1
+        2
+        3
+        4
+         */
     }
 
     @Test
@@ -78,6 +99,11 @@ public class Ex4 {
                         cancel();
                     }
                 });
+
+        /*
+        request of 1
+        Cancelling after having received 1
+         */
     }
 
     @Test
@@ -95,6 +121,20 @@ public class Ex4 {
 
         // 구독하는 시점에 generator에서 정의한대로 자동 발행
         flux.subscribe(System.out::println);
+
+        /*
+        3 x 0 = 0
+        3 x 1 = 3
+        3 x 2 = 6
+        3 x 3 = 9
+        3 x 4 = 12
+        3 x 5 = 15
+        3 x 6 = 18
+        3 x 7 = 21
+        3 x 8 = 24
+        3 x 9 = 27
+        3 x 10 = 30
+         */
     }
 
     @Test
@@ -134,6 +174,12 @@ public class Ex4 {
 
         myEventProcessor.newDataChunk(Arrays.asList("item1", "item2"));
         myEventProcessor.dataComplete();
+
+        /*
+        Received: item1
+        Received: item2
+        Stream completed
+         */
     }
 
     @Test
@@ -172,6 +218,13 @@ public class Ex4 {
 
         myEventProcessor.newDataChunk(List.of("item1", "item2", "item3"));
         myEventProcessor.dataError();
+
+        /*
+        Received: item1
+        Received: item2
+        Received: item3
+        Error received: java.lang.RuntimeException
+         */
     }
 
     @Test
@@ -214,6 +267,14 @@ public class Ex4 {
 
         myEventProcessor.newDataChunk(Arrays.asList("item1", "item2"));
         myEventProcessor.dataComplete();
+
+        /*
+        Flux request 9223372036854775807
+        Received: item1
+        Received: item2
+        Stream completed
+        Flux disposed
+         */
     }
 
     @Test
@@ -228,6 +289,12 @@ public class Ex4 {
                 });
 
         alphabet.subscribe(System.out::println);
+
+        /*
+        M
+        I
+        T
+         */
     }
 
     private String alphabet(int letterNumber) {
@@ -251,6 +318,8 @@ public class Ex4 {
 
         t.start();
         t.join();
+
+        // hello thread Thread-0
     }
 
     @Test
@@ -269,10 +338,9 @@ public class Ex4 {
         t.start();
         t.join();   // 외부 쓰레드 종료 전 현재 테스트의 main 쓰레드가 종료될 수 있기 때문에 설정
 
-        /**
-         * 실제 호출은 마지막 map 이후이므로 설정한 쓰레드로 보임
-         * [parellel-scheduler-1] value 11
-         * [parellel-scheduler-1] value 12
+        /*
+         [parellel-scheduler-1] value 11
+         [parellel-scheduler-1] value 12
          */
     }
 
@@ -291,5 +359,10 @@ public class Ex4 {
 
         t.start();
         t.join();
+
+        /*
+         [parellel-scheduler-1] value 11
+         [parellel-scheduler-1] value 12
+         */
     }
 }
