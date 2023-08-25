@@ -1,6 +1,9 @@
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.concurrent.atomic.LongAdder;
 
 @DisplayName("4.6 예외 처리")
 public class Ex4_6 {
@@ -85,5 +88,39 @@ public class Ex4_6 {
         30
         [ERROR] (main) Operator called default onErrorDropped - reactor.core.Exceptions$ErrorCallbackNotImplemented: java.lang.RuntimeException: 30
          */
+    }
+
+    @Test
+    @DisplayName("에러 핸들링(부가기능 추가)")
+    void doOnError() {
+        LongAdder failureStat = new LongAdder();
+        Flux<String> flux =
+                Flux.just("unknown")
+                        .flatMap(k -> callExternalService(k)
+                                // doOnError는 onError와 다르게 에러를 다운스트림으로 던진다
+                                // 일반적으로 로깅, 메트릭, 부가기능 추가시 사용
+                                .doOnError(e -> {
+                                    failureStat.increment();
+                                    System.out.println("uh oh, falling back, service failed for key " + k);
+                                })
+                        )
+                        .onErrorResume(e ->
+                                {
+                                    System.out.println("error catched in onError " + e.getClass().getName());
+                                    return Flux.just("default-value");
+                                }
+                        );
+
+        flux.subscribe();
+
+        /*
+        uh oh, falling back, service failed for key unknown
+        [ERROR] (main) Operator called default onErrorDropped - reactor.core.Exceptions$ErrorCallbackNotImplemented: java.lang.RuntimeException
+         */
+    }
+
+    private Mono<String> callExternalService(String data) {
+        if ("unknown".equals(data)) return Mono.error(new RuntimeException());
+        return Mono.just(data);
     }
 }
