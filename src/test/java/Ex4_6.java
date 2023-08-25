@@ -3,6 +3,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.LongAdder;
 
 @DisplayName("4.6 예외 처리")
@@ -140,5 +141,32 @@ public class Ex4_6 {
         subscribed reactor.core.publisher.FluxArray$ArraySubscription
         finally CANCEL
          */
+    }
+
+    @Test
+    @DisplayName("에러 발생시 재시도")
+    void retry() throws InterruptedException {
+        // interval(): 시간 간격으로 Long을 하나씩 올림
+        Flux.interval(Duration.ofMillis(250))
+                .map(input -> {
+                    if (input < 3) return "tick " + input;
+                    throw new RuntimeException("boom");
+                })
+                .retry(1)   // 에러 발생시 재시도
+                .elapsed()  // Array로 최근 발생 시간(ms)를 포함
+                .subscribe(System.out::println, System.err::println);
+
+        /*
+        [258,tick 0]
+        [250,tick 1]
+        [252,tick 2]
+        [506,tick 0]
+        [250,tick 1]
+        [250,tick 2]
+        java.lang.RuntimeException: boom
+         */
+
+        // main 쓰레드 종료 Flux 구독 완료될때까지 충분히 대기
+        Thread.sleep(2100);
     }
 }
