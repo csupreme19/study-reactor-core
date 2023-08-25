@@ -2,6 +2,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.LongAdder;
@@ -169,4 +170,22 @@ public class Ex4_6 {
         // main 쓰레드 종료 Flux 구독 완료될때까지 충분히 대기
         Thread.sleep(2100);
     }
+
+    @Test
+    @DisplayName("에러 발생시 조건부 재시도")
+    void retryWhen() {
+        Flux<String> flux = Flux
+                .<String>error(new IllegalArgumentException())  // 항상 오류 발생
+                .doOnError(System.out::println) // 에러 로그 확인
+                .retryWhen(Retry.from(companion -> companion.take(3))); // 3번 재시도 후 완료
+        flux.subscribe();
+
+        /*
+        java.lang.IllegalArgumentException
+        java.lang.IllegalArgumentException
+        java.lang.IllegalArgumentException
+        java.lang.IllegalArgumentException
+         */
+    }
+
 }
